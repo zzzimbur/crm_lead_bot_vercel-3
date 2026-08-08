@@ -20,24 +20,21 @@ from aiogram.types import Update
 from app.bot_core import build_bot, build_dispatcher
 from app.config import WEBHOOK_SECRET
 
-# Создаются один раз при "холодном" старте функции и переиспользуются,
-# пока Vercel не решит перезапустить процесс (это нормально для serverless).
-_bot = None
-_dp = None
-
-
-def _get_bot_and_dp():
-    global _bot, _dp
-    if _bot is None or _dp is None:
-        _bot = build_bot()
-        _dp = build_dispatcher()
-    return _bot, _dp
-
 
 async def _process_update(update_data: dict) -> None:
-    bot, dp = _get_bot_and_dp()
-    update = Update.model_validate(update_data)
-    await dp.feed_update(bot, update)
+    # См. пояснение в yclients-версии: бот/диспетчер создаются заново
+    # на каждый вызов, чтобы избежать "Event loop is closed" — Bot был бы
+    # привязан к event loop предыдущего asyncio.run(), который уже закрыт.
+    bot = build_bot()
+    dp = build_dispatcher()
+    try:
+        update = Update.model_validate(update_data)
+        await dp.feed_update(bot, update)
+    finally:
+        await bot.session.close()
+        storage = dp.storage
+        if hasattr(storage, "redis"):
+            await storage.redis.aclose()
 
 
 class handler(BaseHTTPRequestHandler):
