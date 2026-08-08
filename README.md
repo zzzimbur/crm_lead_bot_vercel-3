@@ -25,7 +25,7 @@ Telegram сам стучится к нам, когда что-то происх�
    git add .
    git commit -m "initial"
    git branch -M main
-   git remote add origin https://github.com/ТВОЙ_НИК/crm-lead-bot.git
+   git remote add origin https://github.com/zzzimbur/crm_lead_bot_vercel-3.git
    git push -u origin main
    ```
 
